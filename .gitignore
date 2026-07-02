@@ -1,4 +1,5 @@
 # Python envs and caches
+*.pdf
 __pycache__/
 *.pyc
 *.pyo
