@@ -200,14 +200,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Update Title on Banner dynamically
+        // Update Title and Icon on Banner dynamically
+        const bannerIconContainer = document.querySelector('.welcome-banner .banner-icon');
         if (targetId === 'view-form') {
             viewTitle.innerText = 'Portal de Registro de Leads';
+            if (bannerIconContainer) {
+                bannerIconContainer.innerHTML = '<i class="fa-solid fa-user-plus"></i>';
+            }
         } else if (targetId === 'view-list') {
             viewTitle.innerText = 'Historial Comercial (Base MySQL)';
+            if (bannerIconContainer) {
+                bannerIconContainer.innerHTML = '<i class="fa-solid fa-building-shield"></i>';
+            }
             fetchLeads(); // load immediately when viewing
         } else if (targetId === 'view-notifications') {
             viewTitle.innerText = 'Alertas de Preventa (Caché Redis)';
+            if (bannerIconContainer) {
+                bannerIconContainer.innerHTML = '<i class="fa-solid fa-bell"></i>';
+            }
             fetchNotifications(); // load immediately
         }
     }
