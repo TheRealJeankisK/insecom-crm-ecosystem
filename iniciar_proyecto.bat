@@ -14,11 +14,22 @@ docker --version >nul 2>&1
 if %errorlevel% neq 0 (
     color 0C
     echo [ERROR] Docker no esta instalado o no esta en el PATH del sistema.
-    echo Por favor, asegúrate de iniciar Docker Desktop antes de correr este script.
+    echo Por favor, instala Docker Desktop antes de ejecutar este script.
     echo.
     pause
     exit /b
 )
+
+docker info >nul 2>&1
+if %errorlevel% neq 0 (
+    color 0C
+    echo [ERROR] Docker Desktop no esta iniciado o el motor de Docker no esta corriendo.
+    echo Por favor, abre la aplicacion Docker Desktop en tu PC y espera a que este activa (icono verde) antes de continuar.
+    echo.
+    pause
+    exit /b
+)
+
 
 echo [2/3] Levantando contenedores y compilandolos (docker-compose up)...
 echo.
