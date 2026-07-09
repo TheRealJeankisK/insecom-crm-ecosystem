@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGIP - Portal Médico de Gestión Integrada</title>
+    <!-- Google Fonts (Outfit) -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css?v=3.1.0">
+</head>
+<body>
+    <!-- 1. LOGIN VIEW (Full Screen) -->
+    <div id="view-login" class="login-wrapper">
+        <div class="login-card">
+            <div class="login-brand">
+                <i class="fa-solid fa-laptop-medical login-logo" style="font-size: 3rem; color: var(--accent-green); margin-bottom: 0.5rem;"></i>
+                <h2>SGIP</h2>
+                <p>Gestión Integrada de Pacientes y Telemedicina</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username"><i class="fa-solid fa-user-md"></i> Nombre de Usuario</label>
+                    <input type="text" id="login-username" placeholder="Ingrese su usuario médico" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password"><i class="fa-solid fa-lock"></i> Contraseña</label>
+                    <input type="password" id="login-password" placeholder="Ingrese su clave secreta" required>
+                </div>
+                
+                <div id="login-error" class="login-error hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i> Credenciales de acceso incorrectas
+                </div>
+                
+                <button type="submit" class="btn-primary btn-login">
+                    <span>Iniciar Sesión</span> <i class="fa-solid fa-right-to-bracket"></i>
+                </button>
+                <div class="login-options">
+                    <a href="#" id="btn-forgot-password" class="forgot-password-link">¿Olvidó su contraseña?</a>
+                </div>
+            </form>
+
+            <div id="recovery-message" class="recovery-box hidden">
+                <i class="fa-solid fa-circle-info recovery-icon"></i>
+                <p>Para restablecer su contraseña, póngase en contacto con el equipo de TI de SGIP al correo <strong>soporte@sgip.gob.ec</strong>.</p>
+                <button type="button" id="btn-close-recovery" class="btn-close-recovery">Entendido</button>
+            </div>
+            
+            <!-- Demo Credentials Box -->
+            <div class="demo-credentials-box">
+                <h4><i class="fa-solid fa-key"></i> Credenciales Demo</h4>
+                <div class="demo-role-row">
+                    <span class="demo-role"><i class="fa-solid fa-user-shield"></i> Administrador:</span>
+                    <span class="demo-creds">admin / admin123</span>
+                </div>
+                <div class="demo-role-row">
+                    <span class="demo-role"><i class="fa-solid fa-user-doctor"></i> Doctor (Lectura):</span>
+                    <span class="demo-creds">doctor / doctor123</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MAIN APP WORKSPACE (Hidden by default until logged in) -->
+    <div id="app-workspace" class="app-container hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-laptop-medical" style="color: var(--accent-green); font-size: 1.8rem; margin-right: 0.5rem;"></i>
+                <h2 style="font-size: 1.4rem; font-weight: 700; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px;">SGIP Portal</h2>
+            </div>
+            <nav class="menu">
+                <a href="#" class="menu-item active" data-target="view-dashboard"><i class="fa-solid fa-chart-pie"></i> Estadísticas</a>
+                <a href="#" class="menu-item" data-target="view-list" id="nav-patients-history" style="display: flex; align-items: center; justify-content: space-between;"><span><i class="fa-solid fa-notes-medical"></i> Historiales Clínicos</span><i class="fa-solid fa-chevron-down" id="submenu-chevron" style="font-size: 0.7rem; transition: transform 0.3s; transform: rotate(-90deg);"></i></a>
+                <!-- Subcategory: Ingresar Paciente (collapsible) -->
+                <div id="submenu-historial" style="overflow: hidden; max-height: 0; transition: max-height 0.3s ease;">
+                    <a href="#" class="menu-item submenu-item" data-target="view-form" id="nav-create-patient" style="padding-left: 2.8rem; font-size: 0.82rem; margin-left: 0; border-left: 2px solid rgba(99, 102, 241, 0.4); color: #a5b4fc;"><i class="fa-solid fa-user-plus" style="font-size: 0.75rem;"></i> Ingresar Paciente</a>
+                </div>
+                <a href="#" class="menu-item" data-target="view-lab-simulator" id="nav-lab-integration"><i class="fa-solid fa-flask-vial"></i> Integración de Exámenes</a>
+                <a href="#" class="menu-item" data-target="view-notifications"><i class="fa-solid fa-bell"></i> Alertas de Salud <span class="badge" id="notification-count">0</span></a>
+                <a href="#" class="menu-item" data-target="view-config" id="nav-config"><i class="fa-solid fa-gears"></i> Configuración</a>
+            </nav>
+            <div class="system-status">
+                <h3>Estado del Sistema</h3>
+                <div class="status-indicator success"><span class="dot"></span> API Gateway: OK</div>
+                <div class="status-indicator success"><span class="dot"></span> Backend API: OK</div>
+                <div class="status-indicator info"><span class="dot"></span> Broker: RabbitMQ</div>
+            </div>
+            <button id="btn-logout" class="menu-item btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión</button>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div style="flex-grow: 1;"></div>
+                <div class="user-profile">
+                    <div class="profile-info">
+                        <span class="user-name" id="user-display-name">Admin</span>
+                        <span class="user-role" id="user-display-role">Médico Especialista</span>
+                    </div>
+                    <div class="avatar"><i class="fa-solid fa-user-md"></i></div>
+                </div>
+            </header>
+
+            <!-- Workspace Body -->
+            <div class="workspace-body">
+                <!-- Welcome Banner -->
+                <section class="welcome-banner">
+                    <div class="banner-text">
+                        <h2 id="view-title">Portal Clínico de Pacientes (SGIP)</h2>
+                        <p>Sistema de Gestión Integrada de Pacientes y Telemedicina (SGIP)</p>
+                    </div>
+                    <div class="banner-icon">
+                        <i class="fa-solid fa-house-medical"></i>
+                    </div>
+                </section>
+
+                <!-- TAB 0: Dashboard View -->
+                <div id="view-dashboard" class="view-pane">
+                    <!-- Dashboard Widgets -->
+                    <div class="dashboard-widgets">
+                        <div class="widget-card">
+                            <i class="fa-solid fa-hospital-user widget-icon" style="color: var(--accent-green);"></i>
+                            <div class="widget-info">
+                                <span class="widget-value" id="widget-total-patients">0</span>
+                                <span class="widget-label">Pacientes Registrados</span>
+                            </div>
+                        </div>
+                        <div class="widget-card alert-critical">
+                            <i class="fa-solid fa-triangle-exclamation widget-icon" style="color: var(--color-danger);"></i>
+                            <div class="widget-info">
+                                <span class="widget-value" id="widget-critical-patients">0</span>
+                                <span class="widget-label">Alertas Críticas</span>
+                            </div>
+                        </div>
+                        <div class="widget-card alert-observation">
+                            <i class="fa-solid fa-heart-pulse widget-icon" style="color: var(--color-warning);"></i>
+                            <div class="widget-info">
+                                <span class="widget-value" id="widget-obs-patients">0</span>
+                                <span class="widget-label">En Observación</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <i class="fa-solid fa-chart-pie text-gradient-icon"></i>
+                                <h3>Distribución de Estado Clínico</h3>
+                            </div>
+                            <div class="chart-container" style="position: relative; height:280px; width:100%;">
+                                <canvas id="chart-health-status"></canvas>
+                            </div>
+                        </div>
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <i class="fa-solid fa-chart-bar text-gradient-icon"></i>
+                                <h3>Pacientes por Especialidad Examen</h3>
+                            </div>
+                            <div class="chart-container" style="position: relative; height:280px; width:100%;">
+                                <canvas id="chart-diagnoses"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 1: Patients Form View -->
+                <div id="view-form" class="view-pane hidden">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-folder-plus text-gradient-icon"></i>
+                            <h3>Registro de Nuevo Paciente</h3>
+                        </div>
+                        <p class="card-subtitle">Registra los datos personales, diagnóstico y tipo de examen del paciente.</p>
+                        
+                        <form id="lead-form">
+                            <div class="form-group">
+                                <label for="nombre"><i class="fa-solid fa-user"></i> Nombre Completo del Paciente</label>
+                                <input type="text" id="nombre" placeholder="Ej. Juan Pérez" required>
+                            </div>
+                            <div class="form-group" id="email-fields-container">
+                                <label class="label-with-btn">
+                                    <span><i class="fa-solid fa-envelope"></i> Correo(s) Electrónico(s)</span>
+                                    <button type="button" class="btn-add-input" onclick="addDynamicField('email-fields-container', 'lead-email-input', 'Ej. paciente@gmail.com', 'email')">
+                                        <i class="fa-solid fa-plus"></i> Añadir
+                                    </button>
+                                </label>
+                                <div class="dynamic-input-wrapper">
+                                    <input type="email" class="lead-email-input" placeholder="Ej. paciente@gmail.com" required>
+                                </div>
+                            </div>
+                            <div class="form-group" id="telefono-fields-container">
+                                <label class="label-with-btn">
+                                    <span><i class="fa-solid fa-phone"></i> Teléfono(s) / Contacto Emergencia</span>
+                                    <button type="button" class="btn-add-input" onclick="addDynamicField('telefono-fields-container', 'lead-telefono-input', 'Ej. +593 999999999', 'text')">
+                                        <i class="fa-solid fa-plus"></i> Añadir
+                                    </button>
+                                </label>
+                                <div class="dynamic-input-wrapper">
+                                    <input type="text" class="lead-telefono-input" placeholder="Ej. +593 999999999" required>
+                                </div>
+                            </div>
+                            <div class="form-group" id="proyecto-fields-container">
+                                <label class="label-with-btn">
+                                    <span><i class="fa-solid fa-heart-pulse"></i> Diagnóstico(s) Médico(s) Principal(es)</span>
+                                    <button type="button" class="btn-add-input" onclick="addDynamicField('proyecto-fields-container', 'lead-proyecto-input', 'Ej. Hipertensión Arterial', 'text')">
+                                        <i class="fa-solid fa-plus"></i> Añadir
+                                    </button>
+                                </label>
+                                <div class="dynamic-input-wrapper">
+                                    <input type="text" class="lead-proyecto-input" placeholder="Ej. Hipertensión Arterial" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="requerimientos"><i class="fa-solid fa-microscope"></i> Examen de Laboratorio Solicitado</label>
+                                <select id="requerimientos" required>
+                                    <option value="" disabled selected>Seleccione tipo de examen...</option>
+                                    <option value="Hemograma Completo & Sangre">Hemograma Completo & Sangre</option>
+                                    <option value="Ecocardiograma Transtorácico">Ecocardiograma Transtorácico</option>
+                                    <option value="Ecografía de Abdomen Completo">Ecografía de Abdomen Completo</option>
+                                    <option value="Perfil Renal & Electrólitos">Perfil Renal & Electrólitos</option>
+                                    <option value="Holter de Ritmo Cardíaco 24h">Holter de Ritmo Cardíaco 24h</option>
+                                    <option value="OTRO">Otro (Especificar examen personalizado...)</option>
+                                </select>
+                            </div>
+                            <div class="form-group hidden" id="requerimientos-otro-container">
+                                <label for="requerimientos-otro"><i class="fa-solid fa-pen-clip"></i> Especifique Examen Personalizado</label>
+                                <input type="text" id="requerimientos-otro" placeholder="Ej. PCR en Tiempo Real para Influenza H1N1">
+                            </div>
+                            <div class="form-group">
+                                <label for="lead-estado"><i class="fa-solid fa-heart-pulse"></i> Estado Clínico del Paciente</label>
+                                <select id="lead-estado" required>
+                                    <option value="Estable" selected>Estable</option>
+                                    <option value="Observación">Observación</option>
+                                    <option value="Crítico">Crítico</option>
+                                </select>
+                            </div>
+                            <div class="form-group hidden" id="fecha-cita-container">
+                                <label for="lead-fecha-cita"><i class="fa-solid fa-calendar-check"></i> Próxima Consulta o Control Médico</label>
+                                <input type="datetime-local" id="lead-fecha-cita">
+                            </div>
+                            
+                            <!-- Signos Vitales Clínicos (Opcional) -->
+                            <div class="vitals-toggle-card" style="background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.05); padding: 0.8rem 1rem; border-radius: 12px; margin-top: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;">
+                                <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(13, 148, 136, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-green-light);">
+                                        <i class="fa-solid fa-file-waveform" style="font-size: 1.1rem;"></i>
+                                    </div>
+                                    <div style="text-align: left;">
+                                        <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">Registrar Signos Vitales</h4>
+                                        <p style="margin: 0; font-size: 0.72rem; color: var(--text-secondary);">Habilitar captura estructurada de métricas clínicas</p>
+                                    </div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="chk-vitals">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="vitals-container" class="hidden" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.35) 0%, rgba(15, 23, 42, 0.55) 100%); border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.2rem; border-radius: 16px; margin-bottom: 1.2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="vital-temp" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.3rem; color: #f1f5f9;"><i class="fa-solid fa-temperature-half" style="color: #ef4444; width: 14px;"></i> Temperatura (°C)</label>
+                                    <input type="number" step="0.1" id="vital-temp" placeholder="Ej. 37.0" style="padding: 0.7rem 0.9rem; font-size: 0.88rem; border-left: 3px solid #ef4444 !important; background: rgba(0,0,0,0.2);">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="vital-fc" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.3rem; color: #f1f5f9;"><i class="fa-solid fa-heart" style="color: #34d399; width: 14px;"></i> Pulso / FC (lpm)</label>
+                                    <input type="number" id="vital-fc" placeholder="Ej. 75" style="padding: 0.7rem 0.9rem; font-size: 0.88rem; border-left: 3px solid #34d399 !important; background: rgba(0,0,0,0.2);">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="vital-sat" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.3rem; color: #f1f5f9;"><i class="fa-solid fa-lungs" style="color: #67e8f9; width: 14px;"></i> Saturación SpO2 (%)</label>
+                                    <input type="number" id="vital-sat" placeholder="Ej. 98" style="padding: 0.7rem 0.9rem; font-size: 0.88rem; border-left: 3px solid #67e8f9 !important; background: rgba(0,0,0,0.2);">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="vital-pa" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.3rem; color: #f1f5f9;"><i class="fa-solid fa-gauge" style="color: #f59e0b; width: 14px;"></i> Presión Arterial (S/D)</label>
+                                    <input type="text" id="vital-pa" placeholder="Ej. 120/80" style="padding: 0.7rem 0.9rem; font-size: 0.88rem; border-left: 3px solid #f59e0b !important; background: rgba(0,0,0,0.2);">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="detalles"><i class="fa-solid fa-clipboard-list"></i> Evolución Clínica / Notas Médicas</label>
+                                <textarea id="detalles-textarea" placeholder="Escriba la evolución clínica del paciente, notas de laboratorio o indicaciones médicas..." rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary" id="btn-submit">
+                                <span>Registrar Paciente</span> <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Patients List View -->
+                <div id="view-list" class="view-pane hidden">
+                    <section class="card list-card">
+                        <div class="card-header list-header">
+                            <div>
+                                <i class="fa-solid fa-table-list text-gradient-icon"></i>
+                                <h3>Historial de Pacientes Clínicos (Persistido en MySQL)</h3>
+                            </div>
+                            <div class="list-header-actions">
+                                <button class="btn-primary" id="btn-goto-create"><i class="fa-solid fa-plus"></i> Registrar Paciente</button>
+                                <button class="btn-secondary" id="btn-refresh"><i class="fa-solid fa-rotate"></i> Actualizar</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Search, Filter and Export Panel -->
+                        <div class="search-filter-panel">
+                            <div class="search-group">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="leads-search-input" placeholder="Buscar por ID, nombre, diagnóstico, email...">
+                            </div>
+                            <div class="filter-group">
+                                <i class="fa-solid fa-filter filter-icon"></i>
+                                <select id="leads-filter-requirement">
+                                    <option value="ALL">Todos los Exámenes</option>
+                                    <option value="Hemograma Completo & Sangre">Hemograma Completo & Sangre</option>
+                                    <option value="Ecocardiograma Transtorácico">Ecocardiograma Transtorácico</option>
+                                    <option value="Ecografía de Abdomen Completo">Ecografía de Abdomen Completo</option>
+                                    <option value="Perfil Renal & Electrólitos">Perfil Renal & Electrólitos</option>
+                                    <option value="Holter de Ritmo Cardíaco 24h">Holter de Ritmo Cardíaco 24h</option>
+                                </select>
+                            </div>
+                            <div class="filter-group export-group">
+                                <i class="fa-solid fa-file-export filter-icon"></i>
+                                <select id="export-select">
+                                    <option value="" disabled selected>Exportar como...</option>
+                                    <option value="JSON">NoSQL (Archivo JSON)</option>
+                                    <option value="EXCEL">Hoja Excel (CSV)</option>
+                                    <option value="IMAGE">Captura Imagen (PNG)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="leads-table" id="leads-table-to-export">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-sort="id">H.C. <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="proyecto">Diagnóstico Principal <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="nombre">Paciente <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="email">Email <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="telefono">Contacto Emergencia <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="requerimientos">Examen Solicitado <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="estado">Estado Clínico <i class="fa-solid fa-sort"></i></th>
+                                        <th>Evolución Clínica</th>
+                                        <th class="sortable" data-sort="created_at">Fecha Ingreso <i class="fa-solid fa-sort"></i></th>
+                                        <th class="action-column">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leads-table-body">
+                                    <!-- Dynamically loaded -->
+                                    <tr>
+                                        <td colspan="10" class="loading-td">Cargando base de datos MySQL...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- TAB 4: Lab Simulator View (Exams Integration Gateway) -->
+                <div id="view-lab-simulator" class="view-pane hidden">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-flask-vial text-gradient-icon"></i>
+                            <h3>Pasarela de Integración de Exámenes Clínicos (Patrón Adapter)</h3>
+                        </div>
+                        <p class="card-subtitle">Gestione la recepción e integración de resultados de exámenes externos en formatos estructurados (JSON/XML). El sistema adaptará y validará los datos de forma asíncrona.</p>
+                        
+                        <form id="lab-simulator-form">
+                            <!-- Panel de Filtros Clínicos Avanzados -->
+                            <div class="charts-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="lab-patient-search"><i class="fa-solid fa-magnifying-glass"></i> Filtrar por Nombre o ID</label>
+                                    <input type="text" id="lab-patient-search" placeholder="Escriba para buscar...">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="lab-filter-status"><i class="fa-solid fa-heart-pulse"></i> Filtrar por Estado</label>
+                                    <select id="lab-filter-status">
+                                        <option value="ALL">Todos los Estados</option>
+                                        <option value="Estable">Estable</option>
+                                        <option value="Observación">Observación</option>
+                                        <option value="Crítico">Crítico</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="lab-filter-exam"><i class="fa-solid fa-microscope"></i> Filtrar por Examen</label>
+                                    <select id="lab-filter-exam">
+                                        <option value="ALL">Todos los Exámenes</option>
+                                        <option value="Hemograma Completo">Hemograma Completo</option>
+                                        <option value="Ecocardiograma Transtorácico">Ecocardiograma Transtorácico</option>
+                                        <option value="Ecografía Obstétrica Doppler">Ecografía Obstétrica Doppler</option>
+                                        <option value="Ecografía Abdominal Superior">Ecografía Abdominal Superior</option>
+                                        <option value="Glucosa Postprandial">Glucosa Postprandial</option>
+                                        <option value="Perfil Renal">Perfil Renal</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Listado de Selección Múltiple -->
+                            <div class="form-group" style="margin-bottom: 1.5rem;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;">
+                                    <label style="margin-bottom: 0;"><i class="fa-solid fa-list-check"></i> Pacientes Coincidentes</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button type="button" id="btn-select-all-lab" class="btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.7rem; border-color: var(--accent-green); color: #34d399;"><i class="fa-solid fa-check-double"></i> Todos</button>
+                                        <button type="button" id="btn-select-none-lab" class="btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.7rem;"><i class="fa-solid fa-xmark"></i> Ninguno</button>
+                                    </div>
+                                </div>
+                                <div id="lab-patients-checkbox-list" style="max-height: 180px; overflow-y: auto; background-color: #0b0f19; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 0.6rem;">
+                                    <!-- Dynamic checkboxes loaded here -->
+                                </div>
+                                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);"><i class="fa-solid fa-circle-info"></i> Marque uno o varios pacientes para integrar un reporte masivo.</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="lab-provider"><i class="fa-solid fa-building-user"></i> Proveedor de Laboratorio Clínico Emisor</label>
+                                <select id="lab-provider" required>
+                                    <option value="central_json" selected>Laboratorio Central (Formato JSON)</option>
+                                    <option value="sanjose_xml">Lab Genética San José (Formato XML)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="lab-payload"><i class="fa-solid fa-code"></i> Contenido Crudo del Informe de Examen</label>
+                                <textarea id="lab-payload" rows="8" style="font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; background-color: #090d16; color: #34d399; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; resize: vertical;" required></textarea>
+                            </div>
+                            <div class="action-buttons-row" style="margin-top: 1rem; display: flex; gap: 0.8rem; flex-wrap: wrap;">
+                                <button type="submit" class="btn-primary" id="btn-submit-simulator">
+                                    <span>Procesar e Integrar Examen</span> <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </button>
+                                <button type="button" class="btn-secondary" id="btn-import-file-trigger" style="border-color: var(--accent-indigo); color: #818cf8;">
+                                    <i class="fa-solid fa-file-import"></i> Importar Archivo
+                                </button>
+                                <input type="file" id="lab-file-input" accept=".json,.xml" class="hidden" style="display: none;">
+                                <button type="button" class="btn-secondary" id="btn-export-payload" style="border-color: var(--accent-green); color: #34d399;">
+                                    <i class="fa-solid fa-file-arrow-down"></i> Exportar Archivo
+                                </button>
+                                <button type="button" class="btn-secondary" id="btn-print-payload" style="border-color: #38bdf8; color: #38bdf8;">
+                                    <i class="fa-solid fa-print"></i> Imprimir Reporte PDF
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Notifications View -->
+                <div id="view-notifications" class="view-pane hidden">
+                    <div class="card notifications-card">
+                        <div class="card-header list-header">
+                            <div>
+                                <i class="fa-solid fa-bolt text-gradient-icon alert-icon"></i>
+                                <h3>Alertas Clínicas y Serverless Logs (Redis)</h3>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn-secondary" id="btn-show-legend" style="border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;"><i class="fa-solid fa-circle-info"></i> Leyenda de Colores</button>
+                                <button class="btn-secondary" id="btn-clear-notifications" style="border-color: rgba(239, 68, 68, 0.4); color: #ef4444;"><i class="fa-solid fa-trash-can"></i> Limpiar Historial</button>
+                            </div>
+                        </div>
+                        <p class="card-subtitle" style="margin-top: -1rem; margin-bottom: 1.5rem;">Flujo de alertas asíncronas de telemedicina generadas por la <strong>Azure Function</strong> de Notificaciones.</p>
+                        
+                        <!-- Search & Filter Panel for Notifications -->
+                        <div class="search-filter-panel" style="margin-bottom: 1.5rem;">
+                            <div class="search-group">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="notif-search-input" placeholder="Buscar por título, paciente, diagnóstico o mensaje...">
+                            </div>
+                            <div class="filter-group">
+                                <i class="fa-solid fa-filter filter-icon"></i>
+                                <select id="notif-filter-type">
+                                    <option value="ALL">Todas las Alertas</option>
+                                    <option value="CREATED">Nuevos Ingresos (🆕)</option>
+                                    <option value="INTERESADO">Reportes Críticos (🚨)</option>
+                                    <option value="DESCARTADO">Pacientes Estables (🟢)</option>
+                                    <option value="UPDATED">Actualizaciones (🔄)</option>
+                                    <option value="DELETED">Fichas Eliminadas (🗑️)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="notifications-list" id="notifications-list">
+                            <!-- Dynamically loaded -->
+                            <div class="no-notifications">
+                                <i class="fa-solid fa-circle-nodes"></i>
+                                <p>Esperando eventos del Broker de Mensajería...</p>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- TAB 5: System Configuration View (Admin Only) -->
+                <div id="view-config" class="view-pane hidden">
+                    
+                    <!-- Section 1: User Management (full width) -->
+                    <div class="card form-card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header list-header">
+                            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                <i class="fa-solid fa-user-gear text-gradient-icon"></i>
+                                <div>
+                                    <h3 style="margin: 0;">Gestión de Personal Médico</h3>
+                                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">Administración de cuentas autorizadas con acceso al sistema SGIP.</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-primary" id="btn-open-user-modal">
+                                <i class="fa-solid fa-user-plus"></i> Nuevo Médico
+                            </button>
+                        </div>
+                        
+                        <div class="table-container" style="margin-top: 1rem;">
+                            <table class="leads-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">ID</th>
+                                        <th>Usuario</th>
+                                        <th style="width: 100px;">Rol</th>
+                                        <th style="width: 110px;">Registro</th>
+                                        <th style="width: 130px; text-align: center;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="config-users-tbody">
+                                    <!-- Loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Telemetry params in a 2-col grid -->
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-sliders text-gradient-icon"></i>
+                            <div>
+                                <h3 style="margin: 0;">Parámetros de Servidor y Telemetría</h3>
+                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">Límites de alertas clínicas y configuraciones operativas en producción.</p>
+                            </div>
+                        </div>
+                        
+                        <form id="config-params-form" style="margin-top: 1.5rem;">
+                            <div class="charts-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="config-redis-limit"><i class="fa-solid fa-database"></i> Límite de Alertas en Caché (Redis)</label>
+                                    <input type="number" id="config-redis-limit" value="50" min="5" max="500" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="config-support-email"><i class="fa-solid fa-envelope"></i> Email de Soporte de Emergencias</label>
+                                    <input type="email" id="config-support-email" value="soporte@sgip.gob.ec" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="config-telemetry-interval"><i class="fa-solid fa-clock"></i> Intervalo de Monitoreo de Colas (seg)</label>
+                                    <input type="number" id="config-telemetry-interval" value="10" min="1" max="60" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="min-width: 200px;">
+                                <span>Guardar Parámetros</span> <i class="fa-solid fa-floppy-disk"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Legend Modal -->
+    <div id="legend-modal" class="modal hidden">
+        <div class="modal-content legend-modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-info" style="color: #38bdf8;"></i> Leyenda de Alertas Médicas</h3>
+                <button class="btn-close-modal" id="btn-close-legend-modal">&times;</button>
+            </div>
+            <div class="legend-list">
+                <div class="legend-item">
+                    <span class="legend-color-indicator" style="background-color: var(--accent-green);"></span>
+                    <div class="legend-details">
+                        <strong>Verde (Paciente Estable):</strong>
+                        <p>Se genera cuando se registra o actualiza un paciente con estado clínico "Estable".</p>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color-indicator" style="background-color: #f97316;"></span>
+                    <div class="legend-details">
+                        <strong>Naranja (Modificación):</strong>
+                        <p>Indica la actualización de datos de contacto o información general de la ficha médica.</p>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color-indicator" style="background-color: #eab308;"></span>
+                    <div class="legend-details">
+                        <strong>Amarillo (Control/Cita Agendada):</strong>
+                        <p>Denota que el paciente tiene programada una próxima cita de control o consulta presencial.</p>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color-indicator" style="background-color: #64748b;"></span>
+                    <div class="legend-details">
+                        <strong>Gris (Paciente en Observación):</strong>
+                        <p>Se activa cuando un paciente se encuentra bajo observación médica continua.</p>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color-indicator" style="background-color: #ef4444;"></span>
+                    <div class="legend-details">
+                        <strong>Rojo (Alerta Crítica / Eliminado):</strong>
+                        <p>Se activa ante alertas de estado de salud crítico (requiere atención inmediata del residente) o eliminación de registros.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="btn-close-legend-btn" style="width: 100%;">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. NEW USER MODAL (Hidden by default) -->
+    <div id="modal-user" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fa-solid fa-user-plus modal-header-icon" id="modal-user-icon" style="color: var(--accent-green);"></i>
+                <h3 id="modal-user-title">Registrar Personal Médico</h3>
+                <span class="modal-close" id="btn-close-user-modal">&times;</span>
+            </div>
+            
+            <form id="user-create-form">
+                <input type="hidden" id="edit-user-original-username">
+                <div class="form-group">
+                    <label for="new-user-username"><i class="fa-solid fa-user"></i> Nombre de Usuario</label>
+                    <input type="text" id="new-user-username" placeholder="Ej. DrMorales" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-user-password"><i class="fa-solid fa-key"></i> Contraseña <span id="password-hint" style="font-size: 0.78rem; color: var(--text-secondary);">(dejar vacío para no cambiar)</span></label>
+                    <input type="password" id="new-user-password" placeholder="Nueva contraseña...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-user-role"><i class="fa-solid fa-id-card"></i> Rol Asignado</label>
+                    <select id="new-user-role" required>
+                        <option value="doctor" selected>Doctor (Acceso Limitado - Solo Lectura)</option>
+                        <option value="admin">Administrador Clínico (Acceso Completo)</option>
+                    </select>
+                </div>
+                
+                <div class="modal-actions" style="margin-top: 1.5rem; display: flex; gap: 0.8rem;">
+                    <button type="button" class="btn-secondary" id="btn-cancel-user-modal" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btn-submit-user" style="flex: 1;">Registrar Usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert Dialog -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- html2canvas for Image Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Custom JS -->
+    <script src="app.js?v=3.1.0"></script>
+</body>
+</html>
