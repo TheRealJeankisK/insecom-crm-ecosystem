@@ -20,13 +20,12 @@
   "variables": {
     "storageAccountName": "[concat(parameters('projectName'), 'store')]",
     "serviceBusNamespaceName": "[concat(parameters('projectName'), '-bus')]",
-    "serviceBusQueueName": "leads-queue",
+    "serviceBusQueueName": "patients-queue",
     "appServicePlanName": "[concat(parameters('projectName'), '-plan')]",
     "functionAppName": "[concat(parameters('projectName'), '-func')]",
     "appInsightsName": "[concat(parameters('projectName'), '-insights')]"
   },
   "resources": [
-    # 1. Storage Account (Required by Azure Functions - Standard LRS)
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2021-09-01",
@@ -53,7 +52,6 @@
         }
       }
     },
-    # 2. Service Bus Namespace (Basic Tier - Cost: ~$0.05/month)
     {
       "type": "Microsoft.ServiceBus/namespaces",
       "apiVersion": "2021-11-01",
@@ -78,7 +76,6 @@
         }
       ]
     },
-    # 3. Application Insights (For Logging - Free Tier)
     {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02",
@@ -91,7 +88,6 @@
         "publicNetworkAccessForQuery": "Enabled"
       }
     },
-    # 4. App Service Plan (Consumption Y1 - Cost: $0.00/month for low use)
     {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2021-03-01",
@@ -105,7 +101,6 @@
         "reserved": true
       }
     },
-    # 5. Function App (Python 3.10 - Consumption Model)
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2021-03-01",
