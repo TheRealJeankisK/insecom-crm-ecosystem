@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     AZURE_SERVICE_BUS_CONNECTION_STRING: str = os.getenv("AZURE_SERVICE_BUS_CONNECTION_STRING", "")
     AZURE_SERVICE_BUS_QUEUE_NAME: str = os.getenv("AZURE_SERVICE_BUS_QUEUE_NAME", "patients-queue")
 
+    # Seed Credentials Configs
+    SEED_ADMIN_PASSWORD: str = os.getenv("SEED_ADMIN_PASSWORD", "admin123")
+    SEED_DOCTOR_PASSWORD: str = os.getenv("SEED_DOCTOR_PASSWORD", "doctor123")
+
     @property
     def database_url(self) -> str:
         return f"mysql+pymysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}"

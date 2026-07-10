@@ -73,7 +73,7 @@ def startup_event():
     Base.metadata.create_all(bind=engine)
     print("Database tables initialized successfully.")
     
-    # Seed default users: admin / admin123 (admin role) and doctor / doctor123 (doctor role)
+    # Seed default users: admin (admin role) and doctor (doctor role) from environment settings
     db = SessionLocal()
     try:
         user_count = db.query(Usuario).count()
@@ -81,7 +81,7 @@ def startup_event():
             print("Seeding default users...")
             # 1. Admin User
             salt_admin = generate_salt()
-            hashed_pw_admin = hash_password("admin123", salt_admin)
+            hashed_pw_admin = hash_password(settings.SEED_ADMIN_PASSWORD, salt_admin)
             admin_user = Usuario(
                 username="admin",
                 hashed_password=hashed_pw_admin,
@@ -92,7 +92,7 @@ def startup_event():
             
             # 2. Doctor User
             salt_doctor = generate_salt()
-            hashed_pw_doctor = hash_password("doctor123", salt_doctor)
+            hashed_pw_doctor = hash_password(settings.SEED_DOCTOR_PASSWORD, salt_doctor)
             doctor_user = Usuario(
                 username="doctor",
                 hashed_password=hashed_pw_doctor,
@@ -102,7 +102,7 @@ def startup_event():
             db.add(doctor_user)
             
             db.commit()
-            print("Default users (admin / admin123, doctor / doctor123) created successfully.")
+            print("Default users created successfully via environment variables.")
         else:
             print(f"Database already seeded with {user_count} users.")
             
