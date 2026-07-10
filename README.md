@@ -6,8 +6,8 @@ Este repositorio contiene la entrega final del **Proyecto Integrador** para la m
 
 ## 👥 Integrantes (FICA - Ingeniería de Software)
 *   **Jean Carlos Gómez Mafla**
-*   **Adrian Morales**
-*   **Adrian Puco**
+*   **Adrian Morales Quilumba**
+*   **Nicolas Puco**
 
 **Docente:** Mónica Fernanda Sanchez Rosero  
 **Fecha:** Julio de 2026  
