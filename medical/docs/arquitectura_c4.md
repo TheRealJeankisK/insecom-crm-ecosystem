@@ -25,13 +25,13 @@ graph TB
     end
 
     subgraph ExternalSystems ["Sistemas Externos de SGIP"]
-        Sistema de Laboratorio["Sistema de Laboratorio Clínico<br>(Laboratorio Externo)"]
+        Sistema_de_Laboratorio["Sistema de Laboratorio Clínico<br>(Laboratorio Externo)"]
         MailServer["Servidor de Correo SMTP<br>(Redis Server)"]
     end
 
     Médico -->|Gestiona fichas clínicas e historiales| SGIP
     Admin -->|Gestiona accesos y configuraciones| SGIP
-    SGIP -->|Recibe e integra reportes de exámenes| Sistema de Laboratorio
+    SGIP -->|Recibe e integra reportes de exámenes| Sistema_de_Laboratorio
     SGIP -->|Envía alertas prioritarias y telemetría| MailServer
 ```
 
