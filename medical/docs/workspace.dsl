@@ -121,12 +121,12 @@ workspace {
                 color #ffffff
             }
             element "External System" {
-                shape RoundedRectangle
+                shape RoundedBox
                 background #475569
                 color #ffffff
             }
             element "Software System" {
-                shape RoundedRectangle
+                shape RoundedBox
                 background #1e293b
                 color #ffffff
             }
