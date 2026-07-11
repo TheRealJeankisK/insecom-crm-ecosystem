@@ -63,7 +63,7 @@ Microservicio serverless que actúa como consumidor de la cola de eventos:
 El entorno local de desarrollo está compuesto por 7 contenedores Docker independientes orquestados por Docker Compose, mapeando puertos del host y montando volúmenes de persistencia para garantizar resiliencia e independencia tecnológica.
 
 *Diagrama de Infraestructura Local (C4 Nivel 4 - Despliegue Local):*
-![Nivel 4 - Despliegue Local Docker](C4/Nivel4_Despliegue_Local_Docker.png)
+![Nivel 4 - Despliegue Local Docker](../Arquitectura/C4/Nivel4_Despliegue_Local_Docker.png)
 
 ---
 
